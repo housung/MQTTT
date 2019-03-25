@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript"></script>
+  <script src ="http://code.jquery.com/jquery-1.7.1.js"></script>
+  <script src = "C:\Users\user\Desktop\MQTT 연구\자바스크립트로 만들기\node_modules\socket.io\node_modules\socket.io-client\dist\socket.io.js"></script>
+  <script>
+    var info;
+
+    $(document).ready(function(){
+    var socket =io.connect("http://127.0.0.1:52273");
+      socket.emit('start');
+  
+      socket.on('message',function(data){
+        socket.disconnect();
+        console.log(data);
+        startMQTT(data);
+        });        
+      });
+
+
+</script>
+
+  <script type="text/javascript">
+/*
+  서버 - 클라이언트 (중앙처리 로드테스트)  
+
+*/
+  //Broker에 연결할 클라이언트 인스턴스 
+  var client; 
+  var clientNum;
+
+  var ip;
+  var port;
+  var clientId;
+  var selectTopic;
+  var selectValue;
+
+  function startMQTT(data){
+    
+    ip = data.ip;
+    port = data.port;
+    selectTopic = data.topic;
+    selectValue = data.value;
+    clientNum = data.num;
+    clientId = data.count+"test";
+
+    setBroker();
+    setClient();
+    doConnect();
+
+  }
+
+  //Broker 정하기 
+  //입력한 ip와 port 번호를 설정
+  function setBroker(){
+    console.log("Broker!!"+ip);
+  }
+
+  //클라이언트의 수를 결정 + 객체를 생성
+  function setClient(){
+      client = new Array(clientNum);
+      console.log("Client Ins!!");
+  }
+  
+
+  function onFailure(message){
+  	setTimeout();
+  }
+
+  //
+  function doConnect() {
+
+  	for(var i =0;i<clientNum;i++){
+
+  	client[i] = new Paho.MQTT.Client(ip, Number(port),clientId+i);
+    client[i].connect();
+    // set callback handlers
+  	 client[i].onConnectionLost = function (responseObject) {
+	       console.log("Connection Lost: "+responseObject.errorMessage);
+	   }
+
+	   client[i].onMessageArrived = function (message) {
+ 	      console.log("Message Arrived: "+message.payloadString);
+	   }
+  }
+
+    console.log("on Connect Done\n");
+  }
+
+
+
+  function doSubscribe() {
+    console.log("subscribe done");  
+  }
+
+  function doSend() {
+   console.log("send-message: "+message.payloadString);
+  }
+
+
+  function doDisconnect() {
+     var i = 0;
+     for(i;i<clientNum;i++){
+        client.disconnect();
+     }
+      console.log("disconnect all done");
+  }
+
+  // 웹 메시징 콜백 메서드들
+  function onConnect() {
+      var form = document.getElementById("MqttLoadTest");
+      console.log("connect success!!!!!");
+  }
+
+  function onConnectionLost(responseObject) {
+      var form = document.getElementById("MqttLoadTest");
+      //form.connected.checked= false;
+      if (responseObject.errorCode !== 0)
+          alert(responseObject+"\n"+responseObject.errorCode);
+  }
+
+  function onMessageArrived(message) {
+      var form = document.getElementById("MqttLoadTest");
+      console.log(message.payloadString);
+
+      //textarea에 sub한 메시지 출력
+      form.receiveMsg.value += (this+" : "+message.payloadString + '\n');
+      form.receiveMsg.scrollTop = form.receiveMsg.scrollHeight;
+  }
+
+  </script>
+
+  <style type="text/css">
+   .textarea {
+    overflow-x:hidden;
+    overflow-y:auto;
+   }
+
+  </style>
+
+</head>
+
+<body>
+  <h1>MQTT Load Test</h1>
+  <form id="MqttLoadTest">
+  
+  </form>
+</body>
+</html>
+
