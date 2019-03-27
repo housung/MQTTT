@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<head>
+
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+ 
+  <style type="text/css">
+   .textarea {
+    overflow-x:hidden;
+    overflow-y:auto;
+   }
+
+  </style>
+
+</head>
+
+<body>
+  <h1>Master</h1>
+  <form id="MqttLoadTest">
+  <fieldset>
+    <legend id="SetBroker" > Setting Broker </legend>
+    <script type="text/javascript">
+       var socket = io();
+       socket.emit('masterConnect');
+       socket.on('noticeClient',function(data){
+         var temp = document.createElement('button');
+         var tempbtn = document.createTextNode(data.id);
+         temp.appendChild(tempbtn);
+         document.body.appendChild(temp);
+
+
+       })
+
+      function run(){
+        socket.emit('run');
+      }
+
+    </script>
+
+    <input type="button" value="broker" onClick="run()"/>
+
+  </fieldset>
+  
+  </form>
+</body>
+</html>

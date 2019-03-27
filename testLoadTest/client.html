@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MQTT LOAD TEST CLINET</title>
+  <style>
+    #text_box {
+      width: 620px;
+      height: 500px;
+    }
+    #name {
+      width: 100px;
+    }
+    #msg {
+      width: 350px;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <textarea id="text_box"></textarea>
+  </div>
+  <div>
+  <form id="chating">
+    <div>   
+   </div>
+  </form>
+</div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+  <script>
+    
+var clients;
+
+var kinds;
+var instance;
+
+var ip;
+var id;
+var port;
+var topic;
+var msg;
+
+/*
+var MQTTClient = function(kinds, instance){
+  //pub 인지 sub인지 구분하는 변수
+  this.kinds = kinds;
+
+  //몇개의 클라이언트를 생성할지 정하는 변수
+  this.instance = instance;
+} 
+
+
+var BrokerSet = function(ip,port,id,topic,msg){
+ 
+ if(arguments.length==4 && MQTTClient.kinds == "sub"){
+    this.ip = ip;
+    this.port = port;
+    this.id = id;
+    this.topic = topic;
+  }
+ 
+  else if(arguments.lenght == 5 && MQTTClient.kinds == "pub"){
+    this.ip = ip;
+    this.port = port;
+    this.id = id;
+    this.topic = topic;
+    this.msg = msg;
+  }
+}
+ 
+function setBroker(){
+  console.log("Broker!!");
+}
+ */
+
+function doConnect() {
+  clients = new Array();
+
+   for(var i = 0; i<instance; i++){
+    clients[i] = new Paho.MQTT.Client(ip,port,id+i);
+
+    //콜백 메서드 등록
+    clients[i].onConnect = onConnect;
+    clients[i].onMessageArrived = onMessageArrived;
+    clients[i].onConnectionLost = onConnectionLost;
+    clients[i].connect();
+
+    console.log(clients[i]);
+    }
+    console.log("done connect");
+   }
+
+//이 아래는 당장 x
+  function doSubscribe() {
+    //subscribe 시작
+    for(var i = 0;i<instance;i++){
+    clients[i].subscribe(topic);
+    }
+    console.log("sub done");
+  }
+
+  function doSend() {
+    message = new Paho.MQTT.Message(msg); //메시지 생성
+    message.destinationName = topic; //메시지에 topic 등록
+    for(var i =0;i<instance;i++){
+    clients[i].send(message); //메시지 전송
+   }
+   console.log("send-message: "+message.payloadString);
+  }
+
+  function doDisconnect() {
+      for(var i=0;i<instance;i++)
+              clients[i].disconnect(); //연결 끊기
+      console.log("disconnect");
+  }
+
+  // 웹 메시징 콜백 메서드들
+  function onConnect() {
+      console.log("connect done");
+  }
+
+  function onConnectionLost(responseObject) {
+      if (responseObject.errorCode !== 0)
+          alert(responseObject+"\n"+responseObject.errorCode);
+  }
+
+  function onMessageArrived(message) {
+      console.log(message.payloadString);
+  }
+
+
+
+    var socket = io();
+    /*
+    클라이언트가 연결됬음을 알리기 위한 이벤트입니다.
+    서버에서 이벤트를 받으면 클라이언트의 정보(socket id)가 마스터 페이지에
+    표시됩니다.
+    */
+    socket.emit('notice');
+/*
+    function send() {
+      socket.emit('receive', document.getElementById("name").value, document.getElementById("msg").value);
+      document.getElementById("msg").value="";
+    }
+
+
+    socket.on('client_receive', function (msg) {
+      document.getElementById("text_box").value += msg + "\n";
+    });
+*/
+
+
+    /*
+    서버에서 socket.send()가 실행 됬을때 발생하는 이벤트인 message를
+    이용하여 load test를 실행합니다. 
+    */
+    socket.on('start',function(data){
+      ip = data.ip;
+      port = data.port;
+      id = data.id;
+      topic = data.topic;
+      msg = data.message;
+      kinds = data.kinds;
+      instance = data.instance;
+      
+
+      doConnect();
+      });
+    
+  </script>
+</body>
+
+</html>
+
+
+
