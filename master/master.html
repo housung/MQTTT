@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+
+<head>
+
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+ 
+  <style type="text/css">
+   .textarea {
+    overflow-x:hidden;
+    overflow-y:auto;
+   }
+
+  </style>
+</head>
+
+<body>
+  <h1>Load Test - Master</h1>
+  <form id="masterForm">
+  <fieldset id ="setOption">
+    <legend> Setting Broker </legend>
+    * default상태입니다. Subscribe 이고 instance의 갯수는 10개입니다.<br> 
+    ip : <input type = "text" value="" id = "ip"> <br>
+    port : <input type = "text" value="" id = "port"> <br>
+    
+    <!--topic의 경우는 select 할 수 있게 수정이 필요합니다. -->
+    topic : <select id = "topic">
+              <option value="Hello">Hello</option>
+              <option value="World">World</option>
+              <option value="Topic" selected>Topic</option>
+            </select>
+            <br>
+ 
+    <!--message : <input type = "text" value="" id = "message"> <br> -->
+    set : <select id = "set" onchange="ifPub()" >
+        <option value="sub" selected>Subscribe</option>
+        <option value="pub">Publish</option>
+    </select>
+
+    <script>
+    function ifPub(){
+      var set =  document.getElementById('set').options[document.getElementById('set').selectedIndex].value;
+      if(set=='pub'){
+        document.getElementById("setOption").innerHTML+="message : <textarea id = 'messageBox'></textarea>";
+      }
+      else 
+        document.getElementById('messageBox').remove();
+
+    }
+    
+    </script>
+    <br>
+
+    <input type="button" value="broker" onClick="run()"/>
+  </fieldset>
+  <hr>
+  </form>
+
+  <script type="text/javascript">
+    var clientList = [];
+    var test = 1;
+   
+    var socket = io();
+    socket.emit('masterConnect');
+    socket.on('addClientList',function(data){
+      var clientInfo = { Id : "test"+(test++) , SocketId : data.id };
+      clientList.push(clientInfo);
+     
+      var addFS = document.createElement('div');
+      addFS.innerHTML = "<br><fieldset>"+
+       "<h1>"+clientInfo.Id+"</h1> <br> Socket id: "+data.id+"</fieldset>";
+       addFS.setAttribute("id",data.id);
+      document.body.appendChild(addFS);
+    });
+
+    socket.on('delClientList',function(data){
+        document.getElementById(data.del).remove();
+    })
+
+   function run(){
+    socket.emit('run',{ 
+      Brokerip : document.getElementById("ip").value,
+      Brokerport : Number(document.getElementById('port').value),
+      Brokertopic : document.getElementById('topic').options[document.getElementById('topic').selectedIndex].value,
+      ClientSet : document.getElementById('set').options[document.getElementById('set').selectedIndex].value
+     // Brokermessage : document.getElementById('messageBox').value
+     
+    });
+   }
+
+ </script>
+
+</body>
+</html>
